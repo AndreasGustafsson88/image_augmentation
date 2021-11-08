@@ -6,10 +6,10 @@ Reads a VGG Image Annotator file (json) and outputs desired augmentations, masks
 
 ## Example
 
-###Input
+### Input
 Create annotations for any images with [VIA annotator tool](https://www.robots.ox.ac.uk/~vgg/software/via/)
 
-###Settings
+### Settings
 * adjust settings.ini file
 
 ```
@@ -50,7 +50,7 @@ AUGMENTERS = [
 ## Output
 
 Runs all augmenters and creates annotations file with all augmented images.
-Select **validate=False** to get masks drawn on images.
+Select **validate=True** to get masks drawn on images.
 
 ![](data/samples/val_lr_rot_90_dark041.PNG)
 ![](data/samples/val_Original041.PNG)
