@@ -13,3 +13,4 @@ if __name__ == '__main__':
 
     my_augmentation.augment_images()
     my_augmentation.save_all(config.get('paths', 'OUTPUT_DIR'))
+    my_augmentation.save_as_yolo_annotation(config.get('paths', 'YOLO_OUTPUT_DIR'), snag=0)

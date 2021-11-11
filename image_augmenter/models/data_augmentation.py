@@ -28,25 +28,25 @@ class PolyAugmenter:
 
     AUGMENTERS = [
         iaa.Fliplr(0, name='Original'),  # Keeps original image
-        iaa.Rot90(1, keep_size=False, name='rot_90'),  # Rotate by 90 degrees
-        iaa.Rot90(2, keep_size=False, name='rot_180'),  # Rotate by 180 degrees
-        iaa.Rot90(3, keep_size=False, name='rot_270'),  # Rotate by 270 degrees
-
-        # Mirror, rotate by 90 degrees and darken image
-        iaa.Sequential(
-            [iaa.Fliplr(1),
-             iaa.Rot90(1, keep_size=False),
-             iaa.Multiply(0.5)], name='lr_rot_90_dark'),
-        # Mirror, rotate by 180 degrees and brighten image
-        iaa.Sequential(
-            [iaa.Fliplr(1),
-             iaa.Rot90(2, keep_size=False),
-             iaa.Multiply(1.5)], name='lr_rot_180_bright'),
-        # Mirror, rotate by 270 degrees and randomly darken/brighten image
-        iaa.Sequential(
-            [iaa.Fliplr(1),
-             iaa.Rot90(3, keep_size=False),
-             iaa.Multiply((0.5, 1.5))], name='lr_rot_270_random'),
+        # iaa.Rot90(1, keep_size=False, name='rot_90'),  # Rotate by 90 degrees
+        # iaa.Rot90(2, keep_size=False, name='rot_180'),  # Rotate by 180 degrees
+        # iaa.Rot90(3, keep_size=False, name='rot_270'),  # Rotate by 270 degrees
+        #
+        # # Mirror, rotate by 90 degrees and darken image
+        # iaa.Sequential(
+        #     [iaa.Fliplr(1),
+        #      iaa.Rot90(1, keep_size=False),
+        #      iaa.Multiply(0.5)], name='lr_rot_90_dark'),
+        # # Mirror, rotate by 180 degrees and brighten image
+        # iaa.Sequential(
+        #     [iaa.Fliplr(1),
+        #      iaa.Rot90(2, keep_size=False),
+        #      iaa.Multiply(1.5)], name='lr_rot_180_bright'),
+        # # Mirror, rotate by 270 degrees and randomly darken/brighten image
+        # iaa.Sequential(
+        #     [iaa.Fliplr(1),
+        #      iaa.Rot90(3, keep_size=False),
+        #      iaa.Multiply((0.5, 1.5))], name='lr_rot_270_random'),
     ]
 
     def __init__(self, annotations_path: str, images_path: str, validate: bool = False):
@@ -59,6 +59,39 @@ class PolyAugmenter:
 
         if self.validate:  # Creates an extra set of images for validation purposes only, will take longer to run
             self.overlaid_images: dict = {}
+
+    @staticmethod
+    def get_centre(values: list, shape: int) -> int:
+        """Calculates normalized x_y centre values"""
+        return ((min(values) + max(values)) / 2) / shape
+
+    @staticmethod
+    def get_size(values: list, shape: int) -> int:
+        """Calculates normalized x_y centre values"""
+        return (max(values) - min(values)) / shape
+
+    def transform_yolo(self, name_dict: dict, file_name: str, name: str, shape: str, all_points_x: list, all_points_y: list) -> str:
+        """
+        Transforms annotations to normalized xywh format.
+
+        i.e, class_name x_centre y_centre width height
+        """
+        yolo_name = name_dict[name]
+
+        X_centre = self.get_centre(all_points_x, self.augmented_images[file_name].shape[1])
+        Y_centre = self.get_centre(all_points_y, self.augmented_images[file_name].shape[0])
+        width = self.get_size(all_points_x, self.augmented_images[file_name].shape[1])
+        height = self.get_size(all_points_y, self.augmented_images[file_name].shape[0])
+
+        return f'{yolo_name} {X_centre} {Y_centre} {width} {height}'
+
+    def save_as_yolo_annotation(self, save_directory, **name_dict) -> None:
+        """Reads classnames from name_dict and creates annotations in YOLO *.txt format"""
+        for file_name, val in self.augmented_via.items():
+            yolo_annotations = [self.transform_yolo(name_dict, file_name, **v) for v in val]
+
+            with open(f'{save_directory}/{file_name[:-4]}.txt', 'w') as file:
+                file.write('\n'.join(yolo_annotations))
 
     def _save_validations(self, save_directory: str) -> None:
         """Saves images with annotations on them"""

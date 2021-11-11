@@ -1,3 +1,6 @@
 /venv
 /.idea
 __pycache__/
+/data/input
+/data/output
+/data/yolo_output
